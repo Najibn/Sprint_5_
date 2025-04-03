@@ -7,7 +7,6 @@ use Laravel\Passport\Passport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 
-
 class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
@@ -36,27 +35,37 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_login()
     {
-    // Create a test user directly
-    $user = User::create([
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => bcrypt('Password123!'),
-        'role' => 'customer',
-        'phone' => '1234567890'
-    ]);
 
-    // Attempt login
-    $response = $this->postJson('/api/login', [
-        'email' => 'test@example.com',
-        'password' => 'Password123!'
-    ]);
-
-    // Basic response assertion
-    $response->assertStatus(200);
+        $user = User::factory()->create([
+            'email' => 'test@example.com',
+            'password' => bcrypt('Password123!'),
+            'role' => 'customer'      
+        ]);
+    
+        $response = $this->postJson('/api/login', [
+            'email' => 'test@example.com',
+            'password' => 'Password123!'
+        ]);
+    
+        $response->assertStatus(200)
+        ->assertJson(['message' => 'logged in successfully']);
+        $this->assertAuthenticatedAs($user);
     }
 
 
 
-}
+    public function test_login_fails_with_invalid_password()
+    {
+    $user = User::factory()->create();
 
+    $response = $this->postJson('/api/login', [
+        'email' => $user->email,
+        'password' => 'wrong-password'
+    ]);
+
+    $response->assertStatus(401)
+    ->assertJson(['message' => 'invalid entry']);
+    }
+
+}
 ?>

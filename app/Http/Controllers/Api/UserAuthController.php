@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class UserAuthController extends Controller
 {
-    //validator
+    //todo: validator
     public function register(Request $request)
     {
     
@@ -32,6 +32,23 @@ class UserAuthController extends Controller
 
         return response()->json($user, 201);
     }
-    
+
+
+    public function login(Request $request){
+
+        $user_info = $request ->validate([
+
+            'email'=> 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt($user_info)) {
+
+            return response()->json(['message' => 'invalid entry'], 401);
+        }
+
+        return response()->json(['message' => 'logged in successfully']);
+
+    }
 
 }

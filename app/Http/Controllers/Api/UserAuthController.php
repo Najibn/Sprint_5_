@@ -9,94 +9,95 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
+use App\Http\Requests\LogoutRequest;
 use Illuminate\Http\JsonResponse;
+use Laravel\Passport\Bridge\AccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 class UserAuthController extends Controller
 {
-    //todo: validator  register user
-    /*public function register(Request $request)
-    {
-    
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:8',
-            'role' => 'required|in:admin,customer,technician',
-            'phone' => 'nullable|string'
-        ]);
+    //creates the user
+    public function register(RegisterRequest  $request){
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
-            'role' => $validated['role'],
-            'phone' => $validated['phone'] ?? null
-        ]);
-
-        return response()->json($user, 201);
-    }
-*/
-     
-    //todo: validator  register user
-    public function register(RegisterRequest $request): JsonResponse
-    {
-        $user = User::create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'password' => bcrypt($request->validated('password')),
-            'role' => $request->validated('role'),
-            'phone' => $request->validated('phone'),
-        ]);
+        $user = User::create($request->validated());
 
         return response()->json([
-            'message' => 'User registered successfully',
-            'user' => $user->only(['id', 'name', 'email', 'role'])
-        ], Response::HTTP_CREATED);
+            'status' => true,
+            'message'=> "User Registered Successfully",
+            'data' => $user->makeHidden('password')
+        ]);
     }
 
-    //authenticate the user
-    public function login(LoginRequest $request): JsonResponse
-    {
-        if (!Auth::attempt($request->validated())) {
+    //generates the token
+    public function login(LoginRequest $request){
+
+        $userInfo = $request->validate([
+            'email'     => 'required|email|exists:users,email',
+            'password'   => 'required|string',
+        ]);
+        
+        //email existing in the db, authenticate email and password then generate a token 
+        $user = User::where('email', $userInfo['email'])->first();
+
+        if (!$user || !Hash::check($userInfo['password'], $user->password)) {
             return response()->json([
-                'message' => 'Invalid Entry'
-            ], Response::HTTP_UNAUTHORIZED);
+                'status' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
         }
+
+        $token = $user->createToken("Auth api")->accessToken;
 
         return response()->json([
-            'message' => 'Logged in successfully',
-           'user' => auth()->user()->only(['id', 'name', 'email', 'role'])
-        ]);
+            'status' => true,
+            'message' => "User Logged In Successfully",
+            'user' => $user->only(['id', 'name', 'email', 'role', 'phone']),
+            'token' => $token
+        ], 200);
     }
 
-    //logging out user
-    public function logout(){
-        Auth::logout();
+    //for generation of new token in place of old token
+    public function refreshToken(){
 
-        return response()->json(['message' => 'successfully logged out']);
+        $user = auth('api')->user();
 
-    }
-
-
-
-/*
-   //authenticate the user 
-    public function login(Request $request){
-
-        $user_info = $request ->validate([
-
-            'email'=> 'required|email',
-            'password' => 'required',
-        ]);
-
-        if (!Auth::attempt($user_info)) {
-
-            return response()->json(['message' => 'invalid entry'], 401);
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
         }
 
-        return response()->json(['message' => 'logged in successfully']);
+        $user->token()->revoke();
 
+        $token = $user->createToken("Auth api")->accessToken;
+
+            return response()->json([
+                'status'=> true,
+                'message'=> "Token Re-issued Successfully",
+                'token' => $token
+            ]);
+        
     }
-*/
+
+
+    public function logout(): JsonResponse{
+        
+        $user = auth('api')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Already logged out', 
+            ]);
+        }
+
+            $user->token()->revoke();
+
+        return response()->json([
+            'status'=> true,
+            'message'=> "User Logged Out Successfully"
+        ]);
+    }
+    
 }

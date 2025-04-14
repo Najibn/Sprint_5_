@@ -68,9 +68,13 @@ class UserAuthController extends Controller
             ], 401);
         }
 
-        $user->token()->revoke();
+        // Revoke all tokens for this user
+        $tokens = $user->tokens;
+        foreach ($tokens as $token) {
+            $token->revoke();
+        }
 
-        $token = $user->createToken("Auth api")->accessToken;
+        $token = $user->createToken("Auth API")->accessToken;
 
             return response()->json([
                 'status'=> true,
@@ -81,7 +85,7 @@ class UserAuthController extends Controller
     }
 
 
-    public function logout(): JsonResponse{
+    public function logout(LogoutRequest $request): JsonResponse{
         
         $user = auth('api')->user();
 
@@ -92,12 +96,15 @@ class UserAuthController extends Controller
             ]);
         }
 
-            $user->token()->revoke();
+        // Revoke all tokens for this user
+        foreach ($user->tokens as $token) {
+            $token->revoke();
+        }
 
         return response()->json([
             'status'=> true,
             'message'=> "User Logged Out Successfully"
-        ]);
+        ], 200);
     }
     
 }

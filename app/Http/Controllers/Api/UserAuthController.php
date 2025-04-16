@@ -38,11 +38,17 @@ class UserAuthController extends Controller
         
         //email existing in the db, authenticate email and password then generate a token 
         $user = User::where('email', $userInfo['email'])->first();
-
+/*
+        dd([
+            'user_found' => $user !== null,
+            'password_matches' => $user && Hash::check($userInfo['password'], $user->password),
+            'user_password' => $user?->password,
+        ]);
+*/
         if (!$user || !Hash::check($userInfo['password'], $user->password)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid Entry'
             ], 401);
         }
 

@@ -27,7 +27,7 @@ class StoreProductRequest extends FormRequest
             'type' => 'required|in:water,foam,CO2,DCP',
             'type_capacity' => 'required|string',
             'serial_number' => 'required|string|unique:products,serial_number',
-            'status' => 'required|string',
+            'status' => 'required|string|in:Active,Expired,Needs Maintenance',
             'assigned_to' => $this->status === 'Needs Maintenance' ? 'required|exists:users,id' : 'nullable',
             'location' => 'required|string',
         ];

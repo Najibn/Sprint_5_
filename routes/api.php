@@ -29,10 +29,23 @@ Route::middleware('auth:api')->group(function () {
 
 
     // Customer routes
+    Route::middleware(['role:customer'])->prefix('customer')->group(function () {
+        Route::get('products', [CustomerController::class, 'getProducts']);
+        Route::get('products/{id}', [CustomerController::class, 'getProduct']);
+        Route::get('products/{id}/maintenance_records', [CustomerController::class, 'getProductMaintenanceRecords']);
+        Route::put('products/{id}', [CustomerController::class, 'updateProduct']);
+    });
 
 
 
     // Technician routes
+    Route::middleware(['role:technician'])->prefix('technician')->group(function () {
+        Route::get('assigned_products', [TechnicianController::class, 'getAssignedProducts']);
+        Route::get('maintenance_records', [TechnicianController::class, 'getMaintenanceRecords']);
+        Route::put('maintenance_records/{maintenanceRecord}', [TechnicianController::class, 'updateMaintenanceRecord']);
+        Route::get('products/{id}', [TechnicianController::class, 'getProduct']);
+        Route::get('products/{id}/maintenance-history', [TechnicianController::class, 'getProductMaintenanceHistory']);
+    });
 
 
 

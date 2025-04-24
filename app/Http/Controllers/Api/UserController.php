@@ -14,27 +14,65 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-     /**
-     * Display a listing of users.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/users",
+ *     tags={"Users"},
+ *     summary="Get all users",
+ *     description="Retrieve a list of all users (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/User")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Unauthenticated"
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Forbidden"
+ *     )
+ * )
+ */
     public function index()
     {
         $users = User::all();
         return UserResource::collection($users);
     }
 
-    /**
-     * Store a newly created user.
-     *
-     * @param  \App\Http\Requests\StoreUserRequest  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+/**
+ * @OA\Post(
+ *     path="/users",
+ *     tags={"Users"},
+ *     summary="Create a new user",
+ *     description="Create a new user (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/RegisterRequest")
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="User created successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/User")
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Validation error"
+ *     )
+ * )
+ */
+
+
     public function store(StoreUserRequest $request)
     {
         $validatedData = $request->validated();
-        //$validatedData['password'] = bcrypt($validatedData['password']);
         
         $user = User::create($validatedData);
         
@@ -43,24 +81,73 @@ class UserController extends Controller
             ->setStatusCode(201);
     }
 
-    /**
-     * Display the specified user.
-     *
-     * @param  \App\Models\User  $user
-     * @return \App\Http\Resources\UserResource
-     */
+/**
+ * @OA\Get(
+ *     path="/users/{id}",
+ *     tags={"Users"},
+ *     summary="Get user by ID",
+ *     description="Retrieve a specific user by ID (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of user to return",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(ref="#/components/schemas/User")
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="User not found"
+ *     )
+ * )
+ */
+
     public function show(User $user)
     {
         return new UserResource($user);
     }
 
-    /**
-     * Update the specified user.
-     *
-     * @param  \App\Http\Requests\UpdateUserRequest  $request
-     * @param  \App\Models\User  $user
-     * @return \App\Http\Resources\UserResource
-     */
+/**
+ * @OA\Put(
+ *     path="/users/{id}",
+ *     tags={"Users"},
+ *     summary="Update user",
+ *     description="Update user information (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of user to update",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             @OA\Property(property="name", type="string", example="Updated Name"),
+ *             @OA\Property(property="email", type="string", format="email", example="updated@example.com"),
+ *             @OA\Property(property="password", type="string", format="password", example="newpassword", nullable=true),
+ *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword", nullable=true),
+ *             @OA\Property(property="role", type="string", enum={"admin", "customer", "technician"}, example="customer"),
+ *             @OA\Property(property="phone", type="string", example="+1234567890")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="User updated successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/User")
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Validation error"
+ *     )
+ * )
+ */
     public function update(UpdateUserRequest $request, User $user)
     {
         $validatedData = $request->validated();
@@ -74,145 +161,35 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
-    /**
-     * Remove the specified user.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\JsonResponse
-     */
+/**
+ * @OA\Delete(
+ *     path="/users/{id}",
+ *     tags={"Users"},
+ *     summary="Delete user",
+ *     description="Delete a user (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of user to delete",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=204,
+ *         description="User deleted successfully"
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="User not found"
+ *     )
+ * )
+ */
     public function destroy(User $user)
     {
         $user->delete();
         
         return response()->json(null, 204);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
-    /*
-    public function index(): JsonResponse
-    {
-        $users = User::all();
-
-        return response()->json([
-            'success' => true,
-            'data' => $users
-        ]);
-    }
-
-
-
-    public function store(Request $request): JsonResponse
-    {
-        $validatedData = $this->validateUserData($request);
-        $validatedData['password'] = Hash::make($validatedData['password']);
-        
-        $user = User::create($validatedData);
-
-        return response()->json([
-            'success' => true,
-            'data' => $user,
-            'message' => 'User created successfully'
-        ], 201);
-    }
-
-
-
-    public function show(User $user)
-    {
-        return response()->json([
-            'success' => true,
-            'data' => $user
-        ]);
-    }
-
-
-
-
-    public function update(Request $request, User $user): JsonResponse
-    {
-
-        $validatedData = $this->validateUserData($request, $user->id, false);
-        
-        if ($request->filled('password')) {
-            $validatedData['password'] = Hash::make($request->password);
-        }
-
-        $user->update($validatedData);
-
-        return response()->json([
-            'success' => true,
-            'data' => $user,
-            'message' => 'User updated successfully'
-        ]);
-    }
-
-
-
-    public function destroy(User $user): JsonResponse
-    {
-        $user->delete();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'User deleted successfully'
-        ]);
-    }
-
-
-
-    //helper functions-> Getting available user roles and validation
-    private function getAvailableRoles()
-    {
-        return ['admin', 'customer', 'technician'];
-    }
-
-
-    private function validateUserData(Request $request, $userId = null, $requirePassword = true)
-    {
-        $rules = [
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($userId)
-            ],
-            'role' => 'required|in:' . implode(',', $this->getAvailableRoles()),
-            'phone' => 'required|string|max:20',
-        ];
-
-        if ($requirePassword) {
-            $rules['password'] = 'required|string|min:8|confirmed';
-        } else {
-            $rules['password'] = 'nullable|string|min:8|confirmed';
-        }
-
-        return $request->validate($rules);
-    }
-
-*/
-    //profiles if needed later 
 }

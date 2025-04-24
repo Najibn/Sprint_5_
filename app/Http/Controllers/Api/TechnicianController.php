@@ -13,11 +13,26 @@ use App\Http\Requests\UpdateMaintenanceRecordRequest;
 
 class TechnicianController extends Controller
 {    
-     /**
-     * Get products assigned to the technician.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/technician/assigned_products",
+ *     tags={"Technician"},
+ *     summary="Get technician's assigned products",
+ *     description="Retrieve products assigned to the authenticated technician",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Product")
+ *         )
+ *     )
+ * )
+ */
+
+    //Get products assigned to the technician.
     public function getAssignedProducts()
     {
         $technician = auth('api')->user();
@@ -28,11 +43,26 @@ class TechnicianController extends Controller
         return ProductResource::collection($products);
     }
 
-    /**
-     * Get maintenance records assigned to the technician.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/technician/maintenance_records",
+ *     tags={"Technician"},
+ *     summary="Get technician's maintenance records",
+ *     description="Retrieve maintenance records assigned to the authenticated technician",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/MaintenanceRecord")
+ *         )
+ *     )
+ * )
+ */
+
+    //Get maint. records assigned to the technician.
     public function getMaintenanceRecords()
     {
         $technician = auth('api')->user();
@@ -43,13 +73,38 @@ class TechnicianController extends Controller
         return MaintenanceRecordResource::collection($maintenanceRecords);
     }
 
-    /**
-     * Update a maintenance record.
-     *
-     * @param  \App\Http\Requests\UpdateMaintenanceRecordRequest  $request
-     * @param  \App\Models\MaintenanceRecord  $maintenanceRecord
-     * @return \App\Http\Resources\MaintenanceRecordResource
-     */
+
+/**
+ * @OA\Put(
+ *     path="/technician/maintenance_records/{id}",
+ *     tags={"Technician"},
+ *     summary="Update maintenance record",
+ *     description="Update a maintenance record assigned to the authenticated technician",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of maintenance record to update",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Maintenance record updated successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Forbidden - Maintenance record not assigned to technician"
+ *     )
+ * )
+ */
+
+    //Update a maint. record.
     public function updateMaintenanceRecord(UpdateMaintenanceRecordRequest $request, MaintenanceRecord $maintenanceRecord)
     {
         $technician = auth('api')->user();
@@ -76,12 +131,32 @@ class TechnicianController extends Controller
         return new MaintenanceRecordResource($maintenanceRecord->fresh()->load('product'));
     }
 
-    /**
-     * Get details of a specific product assigned to the technician.
-     *
-     * @param  int  $id
-     * @return \App\Http\Resources\ProductResource
-     */
+
+
+/**
+ * @OA\Get(
+ *     path="/technician/products/{id}",
+ *     tags={"Technician"},
+ *     summary="Get assigned product details",
+ *     description="Retrieve details of a product assigned to the authenticated technician",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     )
+ * )
+ */
+
+    
+    //Get details of a specific product assigned to the technician.
     public function getProduct($id)
     {
         $technician = auth('api')->user();
@@ -92,12 +167,34 @@ class TechnicianController extends Controller
         return new ProductResource($product);
     }
 
-    /**
-     * Get maintenance history for a specific product.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/technician/products/{id}/maintenance-history",
+ *     tags={"Technician"},
+ *     summary="Get product maintenance history",
+ *     description="Retrieve maintenance history for a product assigned to the authenticated technician",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/MaintenanceRecord")
+ *         )
+ *     )
+ * )
+ */
+
+    
+    //Get maintenance history for a specific product.
     public function getProductMaintenanceHistory($id)
     {
         $technician = auth('api')->user();

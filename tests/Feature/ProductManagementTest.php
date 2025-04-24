@@ -32,7 +32,7 @@ class ProductManagementTest extends TestCase
             \Database\Seeders\PassportSeeder::class,
             \Database\Seeders\RolesAndPermissionsSeeder::class,
         ]);
-
+/*
          // Create and assign roles to users
          $this->admin = User::factory()->create();
          $this->admin->assignRole('admin');
@@ -42,8 +42,18 @@ class ProductManagementTest extends TestCase
  
          $this->customer = User::factory()->create();
          $this->customer->assignRole('customer');
+         */
+        $this->admin = $this->createUserWithRole('admin');
+        $this->technician = $this->createUserWithRole('technician');
+        $this->customer = $this->createUserWithRole('customer');
     }
-
+// Helper function to create users with roles
+private function createUserWithRole(string $role): User
+{
+    $user = User::factory()->create();
+    $user->assignRole($role);
+    return $user;
+}
 
 /******************************
  * ADMIN SPECIFIC TESTS
@@ -94,20 +104,18 @@ public function test_admin_can_create_product()
 
 public function test_admin_can_create_product_needing_maintenance()
 {
-    $technician = User::factory()->create();
-    $technician->assignRole('technician');
-
     Passport::actingAs($this->admin);
 
-    $response = $this->postJson('/api/products', [
-        ...Product::factory()->make()->toArray(),
-        'status' => 'Needs Maintenance',
-        'assigned_to' => $technician->id,
-        'serial_number' => 'MAINT-001'
-    ]);
+        $response = $this->postJson('/api/products', [
+            ...Product::factory()->make()->toArray(),
+            'status' => 'Needs Maintenance',
+            'assigned_to' => $this->technician->id,
+            'serial_number' => 'MAINT-001'
+        ]);
 
-    $response->assertStatus(201)
-        ->assertJsonPath('data.assigned_to', $technician->id);
+        $response->assertStatus(201)
+            ->assertJsonPath('data.assigned_to', $this->technician->id)
+            ->assertJsonPath('data.status', 'Needs Maintenance');
 }
 
 public function test_admin_can_update_product_basic_fields()
@@ -125,20 +133,22 @@ public function test_admin_can_update_product_basic_fields()
     ]);
 
     $response->assertStatus(200)
-        ->assertJsonPath('data.location', 'New Building, Floor 5')
-        ->assertJsonPath('data.status', 'Expired');
+            ->assertJson([
+                'data' => [
+                    'location' => 'New Building, Floor 5',
+                    'status' => 'Expired'
+                ]
+            ]);
 
-    $this->assertDatabaseHas('products', [
-        'id' => $product->id,
-        'location' => 'New Building, Floor 5'
-    ]);
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'location' => 'New Building, Floor 5',
+            'status' => 'Expired'
+        ]);
 }
 
 public function test_admin_can_assign_technician_for_maintenance()
 {
-    $technician = User::factory()->create();
-    $technician->assignRole('technician');
-
     $product = Product::factory()->create([
         'user_id' => $this->admin->id,
         'status' => 'Active'
@@ -148,11 +158,11 @@ public function test_admin_can_assign_technician_for_maintenance()
 
     $response = $this->putJson("/api/products/{$product->id}", [
         'status' => 'Needs Maintenance',
-        'assigned_to' => $technician->id
+        'assigned_to' => $this->technician->id
     ]);
 
     $response->assertStatus(200)
-        ->assertJsonPath('data.assigned_to', $technician->id)
+        ->assertJsonPath('data.assigned_to', $this->technician->id)
         ->assertJsonPath('data.status', 'Needs Maintenance');
 }
 
@@ -187,21 +197,18 @@ public function test_non_admin_cannot_create_products()
 
 public function test_admin_can_assign_product_to_customer()
 {
-    $customer = User::factory()->create();
-    $customer->assignRole('customer');
-
-    Passport::actingAs($this->admin);
-
     $productData = Product::factory()->make([
         'user_id' => $this->admin->id,
         'status' => 'Active',
-        'assigned_to' => $customer->id
+        'assigned_to' => $this->customer->id
     ])->toArray();
+
+    Passport::actingAs($this->admin);
 
     $response = $this->postJson('/api/products', $productData);
 
     $response->assertStatus(201)
-        ->assertJsonPath('data.assigned_to', $customer->id);
+        ->assertJsonPath('data.assigned_to', $this->customer->id);
 }
 
 

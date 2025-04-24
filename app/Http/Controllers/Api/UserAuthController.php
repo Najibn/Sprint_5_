@@ -16,9 +16,37 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserAuthController extends Controller
 {
-    //creates the user
-    public function register(RegisterRequest  $request){
-
+/**
+ * @OA\Post(
+ *     path="/register",
+ *     tags={"Authentication"},
+ *     summary="Register a new user",
+ *     operationId="registerUser",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/RegisterRequest")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="User registered successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="User Registered Successfully"),
+ *             @OA\Property(property="data", ref="#/components/schemas/User")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Validation error",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+ *             @OA\Property(property="errors", type="object")
+ *         )
+ *     )
+ * )
+ */
+    public function register(RegisterRequest $request)
+    {
         $user = User::create($request->validated());
 
         return response()->json([
@@ -28,23 +56,49 @@ class UserAuthController extends Controller
         ]);
     }
 
-    //generates the token
-    public function login(LoginRequest $request){
-
+/**
+ * @OA\Post(
+ *     path="/login",
+ *     tags={"Authentication"},
+ *     summary="Authenticate user and generate token",
+ *     operationId="loginUser",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email","password"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+ *             @OA\Property(property="password", type="string", format="password", example="password")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="User logged in successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="User Logged In Successfully"),
+ *             @OA\Property(property="user", ref="#/components/schemas/User"),
+ *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Invalid credentials",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Invalid Entry")
+ *         )
+ *     )
+ * )
+ */
+    public function login(LoginRequest $request)
+    {
         $userInfo = $request->validate([
             'email'     => 'required|email|exists:users,email',
             'password'   => 'required|string',
         ]);
         
-        //email existing in the db, authenticate email and password then generate a token 
         $user = User::where('email', $userInfo['email'])->first();
-/*
-        dd([
-            'user_found' => $user !== null,
-            'password_matches' => $user && Hash::check($userInfo['password'], $user->password),
-            'user_password' => $user?->password,
-        ]);
-*/
+
         if (!$user || !Hash::check($userInfo['password'], $user->password)) {
             return response()->json([
                 'status' => false,
@@ -62,9 +116,34 @@ class UserAuthController extends Controller
         ], 200);
     }
 
-    //for generation of new token in place of old token
-    public function refreshToken(){
+/**
+ * @OA\Post(
+ *     path="/refreshToken",
+ *     tags={"Authentication"},
+ *     summary="Refresh authentication token",
+ *     operationId="refreshToken",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Token refreshed successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="Token Re-issued Successfully"),
+ *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Unauthenticated",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Unauthenticated")
+ *         )
+ *     )
+ * )
+ */
 
+    public function refreshToken()
+    {
         $user = auth('api')->user();
 
         if (!$user) {
@@ -82,17 +161,41 @@ class UserAuthController extends Controller
 
         $token = $user->createToken("Auth API")->accessToken;
 
-            return response()->json([
-                'status'=> true,
-                'message'=> "Token Re-issued Successfully",
-                'token' => $token
-            ]);
-        
+        return response()->json([
+            'status'=> true,
+            'message'=> "Token Re-issued Successfully",
+            'token' => $token
+        ]);
     }
 
+/**
+ * @OA\Post(
+ *     path="/logout",
+ *     tags={"Authentication"},
+ *     summary="Logout user and revoke token",
+ *     operationId="logoutUser",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="User logged out successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="User Logged Out Successfully")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Unauthenticated",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="status", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Already logged out")
+ *         )
+ *     )
+ * )
+ */
 
-    public function logout(LogoutRequest $request): JsonResponse{
-        
+    public function logout(LogoutRequest $request)
+    {
         $user = auth('api')->user();
 
         if (!$user) {
@@ -112,5 +215,5 @@ class UserAuthController extends Controller
             'message'=> "User Logged Out Successfully"
         ], 200);
     }
-    
+
 }

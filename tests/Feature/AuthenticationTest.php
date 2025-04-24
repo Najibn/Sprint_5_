@@ -8,11 +8,12 @@ use Database\Factories\UserFactory;
 use Database\Seeders\PassportSeeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -59,6 +60,7 @@ class AuthenticationTest extends TestCase
         ]);
     
         $response->assertStatus(200);
+        
     }
 
 

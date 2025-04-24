@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\MaintenanceRecordResource;
@@ -13,23 +12,62 @@ use App\Http\Requests\UpdateCustomerProductRequest;
 
 class CustomerController extends Controller
 {
-    /**
-     * Get customer's products.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+    
+/**
+ * @OA\Get(
+ *     path="/customer/products",
+ *     tags={"Customer"},
+ *     summary="Get customer's products",
+ *     description="Retrieve all products belonging to the authenticated customer",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Product")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Forbidden - User must be/have customer role"
+ *     )
+ * )
+ */
+    //Get customer's products.
     public function getProducts()
     {
         $products = Product::where('user_id', Auth::id())->get();
         return ProductResource::collection($products);
     }
 
-    /**
-     * Get a specific product owned by the customer.
-     *
-     * @param  int  $id
-     * @return \App\Http\Resources\ProductResource
-     */
+/**
+ * @OA\Get(
+ *     path="/customer/products/{id}",
+ *     tags={"Customer"},
+ *     summary="Get customer's product by ID",
+ *     description="Retrieve a specific product belonging to the authenticated customer",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product to return",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Forbidden - Product does not belong to customer"
+ *     )
+ * )
+ */
+
+   //Get a specific product owned/assigned by the customer.
     public function getProduct($id)
     {
         $product = Product::findOrFail($id);
@@ -41,12 +79,34 @@ class CustomerController extends Controller
         return new ProductResource($product);
     }
 
-    /**
-     * Get maintenance records for a specific product.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/customer/products/{id}/maintenance_records",
+ *     tags={"Customer"},
+ *     summary="Get maintenance records for a product",
+ *     description="Retrieve maintenance records for a specific product belonging to the authenticated customer",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/MaintenanceRecord")
+ *         )
+ *     )
+ * )
+ */
+
+    
+    //Get maintenance records for a specific product.
     public function getProductMaintenanceRecords($id)
     {
         $product = Product::findOrFail($id);
@@ -60,13 +120,36 @@ class CustomerController extends Controller
         return MaintenanceRecordResource::collection($maintenanceRecords);
     }
 
-    /**
-     * Update a product owned by the customer.
-     *
-     * @param  \App\Http\Requests\UpdateCustomerProductRequest  $request
-     * @param  int  $id
-     * @return \App\Http\Resources\ProductResource
-     */
+
+/**
+ * @OA\Put(
+ *     path="/customer/products/{id}",
+ *     tags={"Customer"},
+ *     summary="Update customer's product",
+ *     description="Update a product belonging to the authenticated customer",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product to update",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             @OA\Property(property="location", type="string", example="New Location")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Product updated successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     )
+ * )
+ */
+
+    //Update a product owned by a customer.
     public function updateProduct(UpdateCustomerProductRequest $request, $id)
     {
         $product = Product::findOrFail($id);

@@ -12,70 +12,156 @@ use App\Http\Requests\UpdateMaintenanceRecordRequest;
 
 class MaintenanceRecordController extends Controller
 {
-    /**
-     * Display a listing of maintenance records.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+
+/**
+ * @OA\Get(
+ *     path="/maintenance_records",
+ *     tags={"Maintenance Records"},
+ *     summary="Get all maintenance records",
+ *     description="Retrieve all maintenance records (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/MaintenanceRecord")
+ *         )
+ *     )
+ * )
+ */
+
+    //Display a listing of maintenance records.
     public function index()
     {
-        $maintenanceRecords = MaintenanceRecord::with('product', 'technician')->get();
-        return MaintenanceRecordResource::collection($maintenanceRecords);
+        $maintRecords = MaintenanceRecord::with('product', 'technician')->get();
+        return MaintenanceRecordResource::collection($maintRecords);
     }
 
-    /**
-     * Store a newly created maintenance record.
-     *
-     * @param  \App\Http\Requests\StoreMaintenanceRecordRequest  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
+/**
+ * @OA\Post(
+ *     path="/maintenance_records",
+ *     tags={"Maintenance Records"},
+ *     summary="Create a new maintenance record",
+ *     description="Create a new maintenance record (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="Maintenance record created successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     )
+ * )
+ */
+
+   //Store a newly created maintenance record.
     public function store(StoreMaintenanceRecordRequest $request)
     {
         $validatedData = $request->validated();
         
-        $maintenanceRecord = MaintenanceRecord::create($validatedData);
+        $maintRecord = MaintenanceRecord::create($validatedData);
         
-        return (new MaintenanceRecordResource($maintenanceRecord))
+        return (new MaintenanceRecordResource($maintRecord))
             ->response()
             ->setStatusCode(201);
     }
 
-    /**
-     * Display the specified maintenance record.
-     *
-     * @param  \App\Models\MaintenanceRecord  $maintenanceRecord
-     * @return \App\Http\Resources\MaintenanceRecordResource
-     */
-    public function show(MaintenanceRecord $maintenanceRecord)
+
+/**
+ * @OA\Get(
+ *     path="/maintenance_records/{id}",
+ *     tags={"Maintenance Records"},
+ *     summary="Get maintenance record by ID",
+ *     description="Retrieve a specific maintenance record by ID",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of maintenance record to return",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     )
+ * )
+ */
+
+    //Display the specified maintenance record.
+    public function show(MaintenanceRecord $maintRecord)
     {
-        return new MaintenanceRecordResource($maintenanceRecord);
+        return new MaintenanceRecordResource($maintRecord);
     }
 
-    /**
-     * Update the specified maintenance record.
-     *
-     * @param  \App\Http\Requests\UpdateMaintenanceRecordRequest  $request
-     * @param  \App\Models\MaintenanceRecord  $maintenanceRecord
-     * @return \App\Http\Resources\MaintenanceRecordResource
-     */
-    public function update(UpdateMaintenanceRecordRequest $request, MaintenanceRecord $maintenanceRecord)
+
+/**
+ * @OA\Put(
+ *     path="/maintenance_records/{id}",
+ *     tags={"Maintenance Records"},
+ *     summary="Update maintenance record",
+ *     description="Update maintenance record information (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of maintenance record to update",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Maintenance record updated successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/MaintenanceRecord")
+ *     )
+ * )
+ */
+
+    //Update the specified maintenance record.
+    public function update(UpdateMaintenanceRecordRequest $request, MaintenanceRecord $maintRecord)
     {
         $validatedData = $request->validated();
         
-        $maintenanceRecord->update($validatedData);
+        $maintRecord->update($validatedData);
         
-        return new MaintenanceRecordResource($maintenanceRecord);
+        return new MaintenanceRecordResource($maintRecord);
     }
 
-    /**
-     * Remove the specified maintenance record.
-     *
-     * @param  \App\Models\MaintenanceRecord  $maintenanceRecord
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function destroy(MaintenanceRecord $maintenanceRecord)
+
+/**
+ * @OA\Delete(
+ *     path="/maintenance_records/{id}",
+ *     tags={"Maintenance Records"},
+ *     summary="Delete maintenance record",
+ *     description="Delete a maintenance record (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of maintenance record to delete",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=204,
+ *         description="Maintenance record deleted successfully"
+ *     )
+ * )
+ */
+
+    // Remove the specified maintenance record.
+    public function destroy(MaintenanceRecord $maintRecord)
     {
-        $maintenanceRecord->delete();
+        $maintRecord->delete();
         
         return response()->json(null, 204);
     }

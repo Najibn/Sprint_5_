@@ -3,21 +3,41 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 
+/**
+ * @OA\Tag(
+ *     name="Products",
+ *     description="API Endpoints for Products Management"
+ * )
+ */
+
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of products based on user role.
-     *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
+/**
+ * @OA\Get(
+ *     path="/products",
+ *     tags={"Products"},
+ *     summary="Get all products",
+ *     description="Retrieve products based on user role",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Product")
+ *         )
+ *     )
+ * )
+ */
+
+    //Display a listing of products based on user role.
     public function index()
     {
         $user = auth('api')->user();
@@ -26,12 +46,27 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    /**
-     * Store a newly created product.
-     *
-     * @param  \App\Http\Requests\StoreProductRequest  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
+/**
+ * @OA\Post(
+ *     path="/products",
+ *     tags={"Products"},
+ *     summary="Create a new product",
+ *     description="Create a new product (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="Product created successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     )
+ * )
+ */
+
+    // Store a newly created product.
     public function store(StoreProductRequest $request)
     {
         $validatedData = $request->validated();
@@ -43,24 +78,64 @@ class ProductController extends Controller
             ->setStatusCode(201);
     }
 
-    /**
-     * Display the specified product.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \App\Http\Resources\ProductResource
-     */
+
+
+/**
+ * @OA\Get(
+ *     path="/products/{id}",
+ *     tags={"Products"},
+ *     summary="Get product by ID",
+ *     description="Retrieve a specific product by ID",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product to return",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     )
+ * )
+ */
+
+    //Display the specified product.
     public function show(Product $product)
     {
         return new ProductResource($product);
     }
 
-    /**
-     * Update the specified product.
-     *
-     * @param  \App\Http\Requests\UpdateProductRequest  $request
-     * @param  \App\Models\Product  $product
-     * @return \App\Http\Resources\ProductResource
-     */
+
+/**
+ * @OA\Put(
+ *     path="/products/{id}",
+ *     tags={"Products"},
+ *     summary="Update product",
+ *     description="Update product information (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product to update",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Product updated successfully",
+ *         @OA\JsonContent(ref="#/components/schemas/Product")
+ *     )
+ * )
+ */
+
+    //Update the specified product.
     public function update(UpdateProductRequest $request, Product $product)
     {
         $validatedData = $request->validated();
@@ -70,12 +145,30 @@ class ProductController extends Controller
         return new ProductResource($product);
     }
 
-    /**
-     * Remove the specified product.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\JsonResponse
-     */
+
+
+/**
+ * @OA\Delete(
+ *     path="/products/{id}",
+ *     tags={"Products"},
+ *     summary="Delete product",
+ *     description="Delete a product (admin only)",
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID of product to delete",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=204,
+ *         description="Product deleted successfully"
+ *     )
+ * )
+ */
+
+    //Remove the specified product.
     public function destroy(Product $product)
     {
         $product->delete();
@@ -83,12 +176,7 @@ class ProductController extends Controller
         return response()->json(null, 204);
     }
 
-    /**
-     * Get products based on user role.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
+    //Get products based on the users role.
     private function getProductsByRole($user)
     {
         return match ($user->role) {

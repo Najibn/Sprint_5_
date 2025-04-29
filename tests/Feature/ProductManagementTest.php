@@ -32,21 +32,11 @@ class ProductManagementTest extends TestCase
             \Database\Seeders\PassportSeeder::class,
             \Database\Seeders\RolesAndPermissionsSeeder::class,
         ]);
-/*
-         // Create and assign roles to users
-         $this->admin = User::factory()->create();
-         $this->admin->assignRole('admin');
- 
-         $this->technician = User::factory()->create();
-         $this->technician->assignRole('technician');
- 
-         $this->customer = User::factory()->create();
-         $this->customer->assignRole('customer');
-         */
         $this->admin = $this->createUserWithRole('admin');
         $this->technician = $this->createUserWithRole('technician');
         $this->customer = $this->createUserWithRole('customer');
     }
+
 // Helper function to create users with roles
 private function createUserWithRole(string $role): User
 {
@@ -387,7 +377,46 @@ public function test_customer_cannot_perform_technician_actions()
    /******************************
      * TECHNICIAN SPECIFIC TESTS
      ******************************/
-
+public function test_technician_can_complete_maintenance()
+     {
+         // 1. Create technician with proper role assignment
+         $technician = User::factory()->create(['role' => 'technician']);
+         $technician->assignRole('technician'); // Ensure Spatie role is assigned
+         
+         // 2. Create product and maintenance record assigned to this technician
+         $product = Product::factory()->create([
+             'status' => 'Needs Maintenance',
+             'assigned_to' => $technician->id
+         ]);
+         
+         $record = MaintenanceRecord::factory()->create([
+             'technician_id' => $technician->id,
+             'product_id' => $product->id,
+             'status' => 'pending'
+         ]);
+     
+         // 3. Generate valid token
+         $token = $technician->createToken('test-token')->accessToken;
+     
+         // 4. Make authenticated request
+         $response = $this->withHeaders([
+             'Authorization' => 'Bearer ' . $token,
+             'Accept' => 'application/json'
+         ])->putJson("/api/technician/maintenance_records/{$record->id}", [
+             'status' => 'completed'
+         ]);
+     
+         // 5. Assertions
+         $response->assertStatus(200);
+         
+         // Refresh models from database
+         $record->refresh();
+         $product->refresh();
+         
+         $this->assertEquals('completed', $record->status);
+         $this->assertEquals('Active', $product->status);
+     }
+     
 public function test_technician_can_view_products_assigned_to_them()
     {
        // Create products assigned to this technician

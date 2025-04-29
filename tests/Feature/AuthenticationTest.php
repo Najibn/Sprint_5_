@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 class AuthenticationTest extends TestCase
 {
     use DatabaseTransactions;
+    //use RefreshDatabase;
 
     protected function setUp(): void
     {
